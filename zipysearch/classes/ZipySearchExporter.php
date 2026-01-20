@@ -278,8 +278,7 @@ class ZipySearchExporter
             $sql->where('pa.id_product_attribute = ' . (int)$idProductAttribute);
         }
 
-        $sql->limit(1);
-
+        // Pas de limit() ici, getValue() ajoute automatiquement LIMIT 1
         return Db::getInstance()->getValue($sql) ?: '';
     }
 
