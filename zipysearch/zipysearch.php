@@ -80,10 +80,14 @@ class ZipySearch extends Module
             return '';
         }
 
+        // Decode HTML entities in selector (PrestaShop may encode quotes)
+        $inputSelector = Configuration::get('ZIPYSEARCH_INPUT_SELECTOR') ?: 'input[name="s"]';
+        $inputSelector = html_entity_decode($inputSelector, ENT_QUOTES, 'UTF-8');
+
         $this->context->smarty->assign([
             'zipysearch_api_url' => self::API_URL,
             'zipysearch_tenant' => $tenant,
-            'zipysearch_input_selector' => Configuration::get('ZIPYSEARCH_INPUT_SELECTOR') ?: 'input[name="s"]',
+            'zipysearch_input_selector' => $inputSelector,
             'zipysearch_debug' => (bool)Configuration::get('ZIPYSEARCH_DEBUG_MODE'),
         ]);
         return $this->display(__FILE__, 'views/templates/hook/displayHeader.tpl');
