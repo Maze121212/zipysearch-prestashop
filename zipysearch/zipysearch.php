@@ -133,6 +133,42 @@ class ZipySearch extends Module
         return $output . $this->renderInstructions() . $this->renderForm();
     }
 
+    private function renderExportUrlField()
+    {
+        $exportUrl = $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]);
+        $copyText = $this->l('Copier');
+        $copiedText = $this->l('Copie !');
+
+        return '
+        <div class="input-group" style="max-width: 600px;">
+            <input type="text" id="zipysearch_export_url" class="form-control" value="' . htmlspecialchars($exportUrl) . '" readonly onclick="this.select();" style="font-family: monospace; font-size: 12px;">
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-default" onclick="copyExportUrl()" title="' . $copyText . '">
+                    <i class="icon-copy"></i> ' . $copyText . '
+                </button>
+            </span>
+        </div>
+        <p class="help-block" style="margin-top: 8px;">
+            ' . $this->l('Communiquez cette URL a ZipySearch pour configurer l\'import automatique de vos produits.') . '
+        </p>
+        <script>
+        function copyExportUrl() {
+            var input = document.getElementById("zipysearch_export_url");
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+            var btn = event.target.closest("button");
+            var originalHtml = btn.innerHTML;
+            btn.innerHTML = "<i class=\"icon-check\"></i> ' . $copiedText . '";
+            btn.classList.add("btn-success");
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove("btn-success");
+            }, 2000);
+        }
+        </script>';
+    }
+
     private function renderInstructions()
     {
         $html = '<div class="panel">
@@ -167,11 +203,10 @@ class ZipySearch extends Module
                         'required' => true,
                     ],
                     [
-                        'type' => 'text',
-                        'label' => $this->l('Token d\'export'),
-                        'name' => 'export_token',
-                        'readonly' => true,
-                        'desc' => $this->l('URL du flux CSV: ') . $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]),
+                        'type' => 'html',
+                        'label' => $this->l('URL d\'export produits'),
+                        'name' => 'export_url_html',
+                        'html_content' => $this->renderExportUrlField(),
                     ],
                     [
                         'type' => 'switch',
@@ -234,7 +269,6 @@ class ZipySearch extends Module
         $helper->submit_action = 'submit_zipysearch';
         $helper->fields_value = [
             'tenant_slug' => Configuration::get('ZIPYSEARCH_TENANT_SLUG'),
-            'export_token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN'),
             'widget_enabled' => Configuration::get('ZIPYSEARCH_WIDGET_ENABLED'),
             'input_selector' => Configuration::get('ZIPYSEARCH_INPUT_SELECTOR'),
             'conversion_tracking' => Configuration::get('ZIPYSEARCH_CONVERSION_TRACKING'),
