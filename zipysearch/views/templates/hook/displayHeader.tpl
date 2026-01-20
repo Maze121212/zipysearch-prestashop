@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof ZipySearch !== 'undefined') {
     ZipySearch.init({
-      inputSelector: '{$zipysearch_input_selector|escape:'javascript'}',
+      inputSelector: '{$zipysearch_input_selector nofilter}',
       apiUrl: '{$zipysearch_api_url|escape:'javascript'}',
       tenant: '{$zipysearch_tenant|escape:'javascript'}'{if $zipysearch_debug},
       debug: true{/if}
