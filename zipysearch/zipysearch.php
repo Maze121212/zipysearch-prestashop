@@ -14,6 +14,7 @@ if (!defined('_PS_VERSION_')) {
 class ZipySearch extends Module
 {
     const API_URL = 'https://api-search.zipybot.com';
+    const ADMIN_URL = 'https://search.zipybot.com';
 
     public function __construct()
     {
@@ -48,6 +49,7 @@ class ZipySearch extends Module
         return parent::uninstall()
             && $this->uninstallSql()
             && Configuration::deleteByName('ZIPYSEARCH_TENANT_SLUG')
+            && Configuration::deleteByName('ZIPYSEARCH_API_KEY')
             && Configuration::deleteByName('ZIPYSEARCH_EXPORT_TOKEN')
             && Configuration::deleteByName('ZIPYSEARCH_WIDGET_ENABLED')
             && Configuration::deleteByName('ZIPYSEARCH_INPUT_SELECTOR')
@@ -117,20 +119,88 @@ class ZipySearch extends Module
         $output = '';
 
         if (Tools::isSubmit('submit_zipysearch')) {
-            Configuration::updateValue('ZIPYSEARCH_TENANT_SLUG', Tools::getValue('tenant_slug'));
+            $tenantSlug = Tools::getValue('tenant_slug');
+            $apiKey = Tools::getValue('api_key');
+
+            Configuration::updateValue('ZIPYSEARCH_TENANT_SLUG', $tenantSlug);
+            Configuration::updateValue('ZIPYSEARCH_API_KEY', $apiKey);
             Configuration::updateValue('ZIPYSEARCH_WIDGET_ENABLED', (int)Tools::getValue('widget_enabled'));
             Configuration::updateValue('ZIPYSEARCH_INPUT_SELECTOR', Tools::getValue('input_selector'));
             Configuration::updateValue('ZIPYSEARCH_CONVERSION_TRACKING', (int)Tools::getValue('conversion_tracking'));
             Configuration::updateValue('ZIPYSEARCH_DEBUG_MODE', (int)Tools::getValue('debug_mode'));
-            $output .= $this->displayConfirmation($this->l('Configuration sauvegardee'));
+
+            // Synchroniser avec ZipySearch si les identifiants sont renseignés
+            if ($tenantSlug && $apiKey) {
+                $syncResult = $this->syncWithZipySearch($tenantSlug, $apiKey);
+                if ($syncResult['success']) {
+                    $output .= $this->displayConfirmation($this->l('Configuration sauvegardee et synchronisee avec ZipySearch'));
+                } else {
+                    $output .= $this->displayConfirmation($this->l('Configuration sauvegardee'));
+                    $output .= $this->displayWarning($this->l('Synchronisation avec ZipySearch echouee: ') . $syncResult['error']);
+                }
+            } else {
+                $output .= $this->displayConfirmation($this->l('Configuration sauvegardee'));
+            }
         }
 
         if (Tools::isSubmit('regenerate_token')) {
             Configuration::updateValue('ZIPYSEARCH_EXPORT_TOKEN', bin2hex(random_bytes(32)));
             $output .= $this->displayConfirmation($this->l('Token regenere'));
+
+            // Resynchroniser avec ZipySearch si les identifiants sont renseignés
+            $tenantSlug = Configuration::get('ZIPYSEARCH_TENANT_SLUG');
+            $apiKey = Configuration::get('ZIPYSEARCH_API_KEY');
+            if ($tenantSlug && $apiKey) {
+                $this->syncWithZipySearch($tenantSlug, $apiKey);
+            }
         }
 
         return $output . $this->renderInstructions() . $this->renderForm();
+    }
+
+    /**
+     * Synchronise la configuration avec ZipySearch
+     */
+    private function syncWithZipySearch($tenantSlug, $apiKey)
+    {
+        $exportUrl = $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]);
+        $shopDomain = $this->context->shop->domain;
+        $inputSelector = Configuration::get('ZIPYSEARCH_INPUT_SELECTOR') ?: 'input[name="s"]';
+
+        $data = [
+            'slug' => $tenantSlug,
+            'apiKey' => $apiKey,
+            'csvUrl' => $exportUrl,
+            'csvDelimiter' => ';',
+            'allowedOrigins' => [$shopDomain],
+            'inputSelector' => $inputSelector,
+        ];
+
+        $ch = curl_init(self::ADMIN_URL . '/api/module/configure');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return ['success' => false, 'error' => $error];
+        }
+
+        if ($httpCode !== 200) {
+            $responseData = json_decode($response, true);
+            return ['success' => false, 'error' => $responseData['error'] ?? 'Erreur HTTP ' . $httpCode];
+        }
+
+        return ['success' => true];
     }
 
     private function renderExportUrlField()
@@ -203,6 +273,13 @@ class ZipySearch extends Module
                         'required' => true,
                     ],
                     [
+                        'type' => 'text',
+                        'label' => $this->l('Clé API'),
+                        'name' => 'api_key',
+                        'desc' => $this->l('Disponible dans votre Profil ZipySearch. Permet la configuration automatique.'),
+                        'required' => true,
+                    ],
+                    [
                         'type' => 'html',
                         'label' => $this->l('URL d\'export produits'),
                         'name' => 'export_url_html',
@@ -269,6 +346,7 @@ class ZipySearch extends Module
         $helper->submit_action = 'submit_zipysearch';
         $helper->fields_value = [
             'tenant_slug' => Configuration::get('ZIPYSEARCH_TENANT_SLUG'),
+            'api_key' => Configuration::get('ZIPYSEARCH_API_KEY'),
             'widget_enabled' => Configuration::get('ZIPYSEARCH_WIDGET_ENABLED'),
             'input_selector' => Configuration::get('ZIPYSEARCH_INPUT_SELECTOR'),
             'conversion_tracking' => Configuration::get('ZIPYSEARCH_CONVERSION_TRACKING'),
