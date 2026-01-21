@@ -174,6 +174,12 @@ class ZipySearch extends Module
             'csvDelimiter' => ';',
             'allowedOrigins' => [$shopDomain],
             'inputSelector' => $inputSelector,
+            // Activer l'import automatique quotidien
+            'cronEnabled' => true,
+            'cronFrequency' => 'daily',
+            'cronTime' => '03:00',
+            // Déclencher l'import immédiatement
+            'triggerImport' => true,
         ];
 
         $ch = curl_init(self::ADMIN_URL . '/api/module/configure');
@@ -247,16 +253,18 @@ class ZipySearch extends Module
     private function renderInstructions()
     {
         $html = '<div class="panel">
-            <h3><i class="icon-info-circle"></i> ' . $this->l('Comment obtenir votre ID de compte ?') . '</h3>
+            <h3><i class="icon-user-plus"></i> ' . $this->l('Comment créer son compte ZipySearch ?') . '</h3>
+            <p style="margin: 15px 0; line-height: 1.6;">' . $this->l('Si vous n\'avez pas encore de compte ZipySearch, suivez ces étapes :') . '</p>
             <ol style="margin: 15px 0; padding-left: 20px; line-height: 1.8;">
                 <li>' . $this->l('Rendez-vous sur') . ' <a href="https://search.zipybot.com" target="_blank" style="color: #25b9d7; font-weight: bold;">search.zipybot.com</a></li>
-                <li>' . $this->l('Creez votre compte gratuitement (1000 requetes/mois offertes)') . '</li>
-                <li>' . $this->l('Recuperez votre ID de compte sur le Dashboard ou dans votre Profil') . '</li>
-                <li>' . $this->l('Collez-le dans le champ ci-dessous') . '</li>
+                <li>' . $this->l('Cliquez sur') . ' <strong>' . $this->l('Créer un compte') . '</strong></li>
+                <li>' . $this->l('Renseignez votre email et choisissez un mot de passe') . '</li>
+                <li>' . $this->l('Votre compte est prêt !') . '</li>
             </ol>
-            <p style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                <i class="icon-lightbulb-o"></i> ' . $this->l('Une fois configure, le widget de recherche remplacera automatiquement la recherche native de votre boutique.') . '
-            </p>
+            <div style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 6px; border-left: 4px solid #28a745;">
+                <strong style="color: #155724;"><i class="icon-gift"></i> ' . $this->l('Plan gratuit inclus') . '</strong>
+                <p style="margin: 8px 0 0 0; color: #155724;">' . $this->l('Profitez de 1000 requêtes de recherche par mois, sans engagement et sans carte bancaire.') . '</p>
+            </div>
         </div>';
         return $html;
     }
@@ -278,16 +286,15 @@ class ZipySearch extends Module
                         'name' => 'help_info',
                         'html_content' => '
                             <div class="alert alert-info">
-                                <h4><i class="icon-info-circle"></i> ' . $this->l('Comment configurer ZipySearch ?') . '</h4>
+                                <h4><i class="icon-cogs"></i> ' . $this->l('Comment configurer ZipySearch ?') . '</h4>
                                 <ol>
-                                    <li>' . $this->l('Rendez-vous sur') . ' <a href="' . $adminUrl . '" target="_blank"><strong>' . $adminUrl . '</strong></a></li>
-                                    <li>' . $this->l('Créez votre compte gratuitement') . ' <strong>(' . $this->l('1000 requêtes/mois offertes') . ')</strong></li>
-                                    <li>' . $this->l('Récupérez votre') . ' <strong>' . $this->l('ID de compte') . '</strong> ' . $this->l('et') . ' <strong>' . $this->l('Clé API') . '</strong> ' . $this->l('dans la page') . ' <a href="' . $adminUrl . '/profile" target="_blank">' . $this->l('Mon compte') . '</a> ' . $this->l('(section Entreprise)') . '</li>
-                                    <li>' . $this->l('Collez ces valeurs dans les champs ci-dessous et') . ' <strong>' . $this->l('sauvegardez') . '</strong></li>
-                                    <li>' . $this->l('Rendez-vous sur') . ' <a href="' . $adminUrl . '/imports" target="_blank"><strong>' . $this->l('Gestion des Imports') . '</strong></a> ' . $this->l('pour importer vos produits') . '</li>
+                                    <li>' . $this->l('Connectez-vous à votre espace ZipySearch :') . ' <a href="' . $adminUrl . '/profile" target="_blank"><strong>' . $adminUrl . '/profile</strong></a></li>
+                                    <li>' . $this->l('Dans la section') . ' <strong>' . $this->l('Entreprise') . '</strong>, ' . $this->l('copiez votre') . ' <strong>' . $this->l('ID de compte') . '</strong> ' . $this->l('et votre') . ' <strong>' . $this->l('Clé API') . '</strong></li>
+                                    <li>' . $this->l('Collez ces valeurs dans les champs ci-dessous') . '</li>
+                                    <li>' . $this->l('Cliquez sur') . ' <strong>' . $this->l('Sauvegarder') . '</strong></li>
                                 </ol>
-                                <p style="margin-top: 10px; margin-bottom: 0;">
-                                    <i class="icon-lightbulb-o"></i> ' . $this->l('Une fois configuré, le widget de recherche remplacera automatiquement la recherche native de votre boutique.') . '
+                                <p style="margin-top: 10px; margin-bottom: 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 4px;">
+                                    <i class="icon-check-circle" style="color: #28a745;"></i> ' . $this->l('Une fois sauvegardé, la recherche ZipySearch remplacera automatiquement la recherche native de votre boutique et l\'import quotidien de vos produits sera activé.') . '
                                 </p>
                             </div>
                         ',
