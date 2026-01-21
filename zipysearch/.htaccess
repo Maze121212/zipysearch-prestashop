@@ -1,0 +1,19 @@
+# Apache 2.2
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+    <Files ~ "^(index\.php|logo\.png|config\.xml)$">
+        Allow from all
+    </Files>
+</IfModule>
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+    <Files ~ "^(index\.php|logo\.png|config\.xml)$">
+        Require all granted
+    </Files>
+</IfModule>
+
+# Deny listing
+Options -Indexes

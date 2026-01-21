@@ -1,11 +1,14 @@
 <?php
 /**
- * ZipySearch - Moteur de recherche intelligent
+ * ZipySearch - Intelligent Search Engine
  *
  * @author    ZipySearch <contact@zipysearch.com>
  * @copyright ZipySearch
  * @license   Commercial license
  */
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
 
 class ZipySearchExportModuleFrontController extends ModuleFrontController
 {
@@ -17,7 +20,7 @@ class ZipySearchExportModuleFrontController extends ModuleFrontController
 
         if (!$token || $token !== $validToken) {
             header('HTTP/1.1 403 Forbidden');
-            die('Invalid token');
+            exit('Invalid token');
         }
 
         // Headers CSV
@@ -27,7 +30,7 @@ class ZipySearchExportModuleFrontController extends ModuleFrontController
 
         // Export
         require_once _PS_MODULE_DIR_ . 'zipysearch/classes/ZipySearchExporter.php';
-        $exporter = new ZipySearchExporter();
+        $exporter = new ZipySearchExporter($this->context);
         $exporter->export();
         exit;
     }

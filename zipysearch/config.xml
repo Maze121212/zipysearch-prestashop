@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module>
     <name>zipysearch</name>
-    <displayName><![CDATA[ZipySearch - Moteur de recherche intelligent]]></displayName>
-    <version><![CDATA[1.0.0]]></version>
-    <description><![CDATA[Remplace la recherche PrestaShop par ZipySearch avec autocompletion, filtres et analytics.]]></description>
+    <displayName><![CDATA[ZipySearch - Intelligent Search Engine]]></displayName>
+    <version><![CDATA[1.0.1]]></version>
+    <description><![CDATA[Replace PrestaShop search with ZipySearch featuring autocomplete, filters and analytics.]]></description>
     <author><![CDATA[ZipySearch]]></author>
     <tab><![CDATA[search_filter]]></tab>
     <is_configurable>1</is_configurable>
     <need_instance>0</need_instance>
     <limited_countries></limited_countries>
+    <product_key><![CDATA[def6e7f534c263a0bd9e17a373be6e32]]></product_key>
 </module>

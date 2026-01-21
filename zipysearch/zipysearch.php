@@ -1,12 +1,11 @@
 <?php
 /**
- * ZipySearch - Moteur de recherche intelligent
+ * ZipySearch - Intelligent Search Engine
  *
  * @author    ZipySearch <contact@zipysearch.com>
  * @copyright ZipySearch
  * @license   Commercial license
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -20,19 +19,19 @@ class ZipySearch extends Module
     {
         $this->name = 'zipysearch';
         $this->tab = 'search_filter';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->author = 'ZipySearch';
         $this->need_instance = 0;
         $this->bootstrap = true;
+        $this->module_key = 'def6e7f534c263a0bd9e17a373be6e32';
         parent::__construct();
-        $this->displayName = $this->l('ZipySearch - Moteur de recherche intelligent');
-        $this->description = $this->l('Remplace la recherche PrestaShop par ZipySearch avec autocompletion, filtres et analytics.');
+        $this->displayName = $this->l('ZipySearch - Intelligent Search Engine');
+        $this->description = $this->l('Replace PrestaShop search with ZipySearch featuring autocomplete, filters and analytics.');
         $this->ps_versions_compliancy = ['min' => '1.7.6.0', 'max' => _PS_VERSION_];
     }
 
     public function install()
     {
-        // Generer token unique
         Configuration::updateValue('ZIPYSEARCH_EXPORT_TOKEN', bin2hex(random_bytes(32)));
         Configuration::updateValue('ZIPYSEARCH_WIDGET_ENABLED', 1);
         Configuration::updateValue('ZIPYSEARCH_INPUT_SELECTOR', 'input[name="s"]');
@@ -71,7 +70,6 @@ class ZipySearch extends Module
         return Db::getInstance()->execute($sql);
     }
 
-    // Hook header - injecter le widget
     public function hookDisplayHeader($params)
     {
         if (!Configuration::get('ZIPYSEARCH_WIDGET_ENABLED')) {
@@ -82,7 +80,6 @@ class ZipySearch extends Module
             return '';
         }
 
-        // Decode HTML entities in selector (PrestaShop may encode quotes)
         $inputSelector = Configuration::get('ZIPYSEARCH_INPUT_SELECTOR') ?: 'input[name="s"]';
         $inputSelector = html_entity_decode($inputSelector, ENT_QUOTES, 'UTF-8');
 
@@ -90,12 +87,11 @@ class ZipySearch extends Module
             'zipysearch_api_url' => self::API_URL,
             'zipysearch_tenant' => $tenant,
             'zipysearch_input_selector' => $inputSelector,
-            'zipysearch_debug' => (bool)Configuration::get('ZIPYSEARCH_DEBUG_MODE'),
+            'zipysearch_debug' => (bool) Configuration::get('ZIPYSEARCH_DEBUG_MODE'),
         ]);
         return $this->display(__FILE__, 'views/templates/hook/displayHeader.tpl');
     }
 
-    // Hook conversion
     public function hookDisplayOrderConfirmation($params)
     {
         if (!Configuration::get('ZIPYSEARCH_CONVERSION_TRACKING')) {
@@ -113,7 +109,6 @@ class ZipySearch extends Module
         return $this->display(__FILE__, 'views/templates/hook/displayOrderConfirmation.tpl');
     }
 
-    // Page de configuration
     public function getContent()
     {
         $output = '';
@@ -124,30 +119,28 @@ class ZipySearch extends Module
 
             Configuration::updateValue('ZIPYSEARCH_TENANT_SLUG', $tenantSlug);
             Configuration::updateValue('ZIPYSEARCH_API_KEY', $apiKey);
-            Configuration::updateValue('ZIPYSEARCH_WIDGET_ENABLED', (int)Tools::getValue('widget_enabled'));
+            Configuration::updateValue('ZIPYSEARCH_WIDGET_ENABLED', (int) Tools::getValue('widget_enabled'));
             Configuration::updateValue('ZIPYSEARCH_INPUT_SELECTOR', Tools::getValue('input_selector'));
-            Configuration::updateValue('ZIPYSEARCH_CONVERSION_TRACKING', (int)Tools::getValue('conversion_tracking'));
-            Configuration::updateValue('ZIPYSEARCH_DEBUG_MODE', (int)Tools::getValue('debug_mode'));
+            Configuration::updateValue('ZIPYSEARCH_CONVERSION_TRACKING', (int) Tools::getValue('conversion_tracking'));
+            Configuration::updateValue('ZIPYSEARCH_DEBUG_MODE', (int) Tools::getValue('debug_mode'));
 
-            // Synchroniser avec ZipySearch si les identifiants sont renseignés
             if ($tenantSlug && $apiKey) {
                 $syncResult = $this->syncWithZipySearch($tenantSlug, $apiKey);
                 if ($syncResult['success']) {
-                    $output .= $this->displayConfirmation($this->l('Configuration sauvegardee et synchronisee avec ZipySearch'));
+                    $output .= $this->displayConfirmation($this->l('Configuration saved and synchronized with ZipySearch'));
                 } else {
-                    $output .= $this->displayConfirmation($this->l('Configuration sauvegardee'));
-                    $output .= $this->displayWarning($this->l('Synchronisation avec ZipySearch echouee: ') . $syncResult['error']);
+                    $output .= $this->displayConfirmation($this->l('Configuration saved'));
+                    $output .= $this->displayWarning($this->l('Synchronization with ZipySearch failed: ') . $syncResult['error']);
                 }
             } else {
-                $output .= $this->displayConfirmation($this->l('Configuration sauvegardee'));
+                $output .= $this->displayConfirmation($this->l('Configuration saved'));
             }
         }
 
         if (Tools::isSubmit('regenerate_token')) {
             Configuration::updateValue('ZIPYSEARCH_EXPORT_TOKEN', bin2hex(random_bytes(32)));
-            $output .= $this->displayConfirmation($this->l('Token regenere'));
+            $output .= $this->displayConfirmation($this->l('Token regenerated'));
 
-            // Resynchroniser avec ZipySearch si les identifiants sont renseignés
             $tenantSlug = Configuration::get('ZIPYSEARCH_TENANT_SLUG');
             $apiKey = Configuration::get('ZIPYSEARCH_API_KEY');
             if ($tenantSlug && $apiKey) {
@@ -158,9 +151,6 @@ class ZipySearch extends Module
         return $output . $this->renderInstructions() . $this->renderForm();
     }
 
-    /**
-     * Synchronise la configuration avec ZipySearch
-     */
     private function syncWithZipySearch($tenantSlug, $apiKey)
     {
         $exportUrl = $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]);
@@ -174,11 +164,9 @@ class ZipySearch extends Module
             'csvDelimiter' => ';',
             'allowedOrigins' => [$shopDomain],
             'inputSelector' => $inputSelector,
-            // Activer l'import automatique quotidien
             'cronEnabled' => true,
             'cronFrequency' => 'daily',
             'cronTime' => '03:00',
-            // Déclencher l'import immédiatement
             'triggerImport' => true,
         ];
 
@@ -191,10 +179,8 @@ class ZipySearch extends Module
             'Accept: application/json',
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        // Suivre les redirections (307, 308, etc.)
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-        // Maintenir la méthode POST lors des redirections 307/308
         curl_setopt($ch, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
 
         $response = curl_exec($ch);
@@ -208,75 +194,30 @@ class ZipySearch extends Module
 
         if ($httpCode !== 200) {
             $responseData = json_decode($response, true);
-            return ['success' => false, 'error' => $responseData['error'] ?? 'Erreur HTTP ' . $httpCode];
+            return ['success' => false, 'error' => $responseData['error'] ?? 'HTTP error ' . $httpCode];
         }
 
         return ['success' => true];
     }
 
-    private function renderExportUrlField()
-    {
-        $exportUrl = $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]);
-        $copyText = $this->l('Copier');
-        $copiedText = $this->l('Copie !');
-
-        return '
-        <div class="input-group" style="max-width: 600px;">
-            <input type="text" id="zipysearch_export_url" class="form-control" value="' . htmlspecialchars($exportUrl) . '" readonly onclick="this.select();" style="font-family: monospace; font-size: 12px;">
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-default" onclick="copyExportUrl()" title="' . $copyText . '">
-                    <i class="icon-copy"></i> ' . $copyText . '
-                </button>
-            </span>
-        </div>
-        <p class="help-block" style="margin-top: 8px;">
-            ' . $this->l('Communiquez cette URL a ZipySearch pour configurer l\'import automatique de vos produits.') . '
-        </p>
-        <script>
-        function copyExportUrl() {
-            var input = document.getElementById("zipysearch_export_url");
-            input.select();
-            input.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-            var btn = event.target.closest("button");
-            var originalHtml = btn.innerHTML;
-            btn.innerHTML = "<i class=\"icon-check\"></i> ' . $copiedText . '";
-            btn.classList.add("btn-success");
-            setTimeout(function() {
-                btn.innerHTML = originalHtml;
-                btn.classList.remove("btn-success");
-            }, 2000);
-        }
-        </script>';
-    }
-
     private function renderInstructions()
     {
-        $html = '<div class="panel">
-            <h3><i class="icon-user-plus"></i> ' . $this->l('Comment créer son compte ZipySearch ?') . '</h3>
-            <p style="margin: 15px 0; line-height: 1.6;">' . $this->l('Si vous n\'avez pas encore de compte ZipySearch, suivez ces étapes :') . '</p>
-            <ol style="margin: 15px 0; padding-left: 20px; line-height: 1.8;">
-                <li>' . $this->l('Rendez-vous sur') . ' <a href="https://search.zipybot.com" target="_blank" style="color: #25b9d7; font-weight: bold;">search.zipybot.com</a></li>
-                <li>' . $this->l('Cliquez sur') . ' <strong>' . $this->l('Créer un compte') . '</strong></li>
-                <li>' . $this->l('Renseignez votre email et choisissez un mot de passe') . '</li>
-                <li>' . $this->l('Votre compte est prêt !') . '</li>
-            </ol>
-            <div style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 6px; border-left: 4px solid #28a745;">
-                <strong style="color: #155724;"><i class="icon-gift"></i> ' . $this->l('Plan gratuit inclus') . '</strong>
-                <p style="margin: 8px 0 0 0; color: #155724;">' . $this->l('Profitez de 1000 requêtes de recherche par mois, sans engagement et sans carte bancaire.') . '</p>
-            </div>
-        </div>';
-        return $html;
+        return $this->display(__FILE__, 'views/templates/admin/instructions.tpl');
     }
 
     private function renderForm()
     {
-        $adminUrl = self::ADMIN_URL;
+        $exportUrl = $this->context->link->getModuleLink('zipysearch', 'export', ['token' => Configuration::get('ZIPYSEARCH_EXPORT_TOKEN')]);
+
+        $this->context->smarty->assign([
+            'zipysearch_export_url' => $exportUrl,
+        ]);
+        $exportUrlHtml = $this->display(__FILE__, 'views/templates/admin/export_url.tpl');
 
         $fields_form = [
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Configuration ZipySearch'),
+                    'title' => $this->l('ZipySearch Configuration'),
                     'icon' => 'icon-search',
                 ],
                 'input' => [
@@ -284,86 +225,73 @@ class ZipySearch extends Module
                         'type' => 'html',
                         'label' => '',
                         'name' => 'help_info',
-                        'html_content' => '
-                            <div class="alert alert-info">
-                                <h4><i class="icon-cogs"></i> ' . $this->l('Comment configurer ZipySearch ?') . '</h4>
-                                <ol>
-                                    <li>' . $this->l('Connectez-vous à votre espace ZipySearch :') . ' <a href="' . $adminUrl . '/profile" target="_blank"><strong>' . $adminUrl . '/profile</strong></a></li>
-                                    <li>' . $this->l('Dans la section') . ' <strong>' . $this->l('Entreprise') . '</strong>, ' . $this->l('copiez votre') . ' <strong>' . $this->l('ID de compte') . '</strong> ' . $this->l('et votre') . ' <strong>' . $this->l('Clé API') . '</strong></li>
-                                    <li>' . $this->l('Collez ces valeurs dans les champs ci-dessous') . '</li>
-                                    <li>' . $this->l('Cliquez sur') . ' <strong>' . $this->l('Sauvegarder') . '</strong></li>
-                                </ol>
-                                <p style="margin-top: 10px; margin-bottom: 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 4px;">
-                                    <i class="icon-check-circle" style="color: #28a745;"></i> ' . $this->l('Une fois sauvegardé, la recherche ZipySearch remplacera automatiquement la recherche native de votre boutique et l\'import quotidien de vos produits sera activé.') . '
-                                </p>
-                            </div>
-                        ',
+                        'html_content' => $this->display(__FILE__, 'views/templates/admin/help_info.tpl'),
                     ],
                     [
                         'type' => 'text',
-                        'label' => $this->l('ID de compte ZipySearch'),
+                        'label' => $this->l('ZipySearch Account ID'),
                         'name' => 'tenant_slug',
-                        'desc' => $this->l('Identifiant unique de votre compte (ex: ma-boutique)'),
+                        'desc' => $this->l('Your unique account identifier (e.g., my-store)'),
                         'required' => true,
                     ],
                     [
                         'type' => 'text',
-                        'label' => $this->l('Clé API'),
+                        'label' => $this->l('API Key'),
                         'name' => 'api_key',
-                        'desc' => $this->l('Permet la configuration automatique de l\'URL d\'export produits'),
+                        'desc' => $this->l('Enables automatic configuration of the products export URL'),
                         'required' => true,
                     ],
                     [
                         'type' => 'html',
-                        'label' => $this->l('URL d\'export produits'),
+                        'label' => $this->l('Products Export URL'),
                         'name' => 'export_url_html',
-                        'html_content' => $this->renderExportUrlField(),
+                        'html_content' => $exportUrlHtml,
                     ],
                     [
                         'type' => 'switch',
-                        'label' => $this->l('Activer le widget'),
+                        'label' => $this->l('Enable widget'),
                         'name' => 'widget_enabled',
                         'is_bool' => true,
                         'values' => [
-                            ['id' => 'active_on', 'value' => 1, 'label' => $this->l('Oui')],
-                            ['id' => 'active_off', 'value' => 0, 'label' => $this->l('Non')],
+                            ['id' => 'active_on', 'value' => 1, 'label' => $this->l('Yes')],
+                            ['id' => 'active_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
                     [
                         'type' => 'text',
-                        'label' => $this->l('Selecteur CSS du champ recherche'),
+                        'label' => $this->l('Search input CSS selector'),
                         'name' => 'input_selector',
-                        'desc' => $this->l('Defaut: input[name="s"]'),
+                        'desc' => $this->l('Default: input[name="s"]'),
                     ],
                     [
                         'type' => 'switch',
-                        'label' => $this->l('Tracker les conversions'),
+                        'label' => $this->l('Track conversions'),
                         'name' => 'conversion_tracking',
                         'is_bool' => true,
                         'values' => [
-                            ['id' => 'conv_on', 'value' => 1, 'label' => $this->l('Oui')],
-                            ['id' => 'conv_off', 'value' => 0, 'label' => $this->l('Non')],
+                            ['id' => 'conv_on', 'value' => 1, 'label' => $this->l('Yes')],
+                            ['id' => 'conv_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
                     [
                         'type' => 'switch',
-                        'label' => $this->l('Mode debug'),
+                        'label' => $this->l('Debug mode'),
                         'name' => 'debug_mode',
                         'is_bool' => true,
                         'values' => [
-                            ['id' => 'debug_on', 'value' => 1, 'label' => $this->l('Oui')],
-                            ['id' => 'debug_off', 'value' => 0, 'label' => $this->l('Non')],
+                            ['id' => 'debug_on', 'value' => 1, 'label' => $this->l('Yes')],
+                            ['id' => 'debug_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
                 ],
                 'submit' => [
-                    'title' => $this->l('Sauvegarder'),
+                    'title' => $this->l('Save'),
                 ],
                 'buttons' => [
                     [
                         'type' => 'submit',
                         'name' => 'regenerate_token',
-                        'title' => $this->l('Regenerer le token'),
+                        'title' => $this->l('Regenerate token'),
                         'icon' => 'process-icon-refresh',
                         'class' => 'pull-right',
                     ],
@@ -376,7 +304,7 @@ class ZipySearch extends Module
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
-        $helper->default_form_language = (int)Configuration::get('PS_LANG_DEFAULT');
+        $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
         $helper->submit_action = 'submit_zipysearch';
         $helper->fields_value = [
             'tenant_slug' => Configuration::get('ZIPYSEARCH_TENANT_SLUG'),
