@@ -1,5 +1,5 @@
 {* ZipySearch Widget *}
-<script src="{$zipysearch_api_url|escape:'htmlall':'UTF-8'}/widget/zipysearch.js" defer></script>
+<script src="{$zipysearch_api_url|escape:'htmlall':'UTF-8'}/widget/zipysearch.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof ZipySearch !== 'undefined') {
