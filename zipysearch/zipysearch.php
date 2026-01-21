@@ -283,7 +283,8 @@ class ZipySearch extends Module
                                     <li>' . $this->l('Rendez-vous sur') . ' <a href="' . $adminUrl . '" target="_blank"><strong>' . $adminUrl . '</strong></a></li>
                                     <li>' . $this->l('Créez votre compte gratuitement') . ' <strong>(' . $this->l('1000 requêtes/mois offertes') . ')</strong></li>
                                     <li>' . $this->l('Récupérez votre') . ' <strong>' . $this->l('ID de compte') . '</strong> ' . $this->l('et') . ' <strong>' . $this->l('Clé API') . '</strong> ' . $this->l('dans la page') . ' <a href="' . $adminUrl . '/profile" target="_blank">' . $this->l('Mon compte') . '</a> ' . $this->l('(section Entreprise)') . '</li>
-                                    <li>' . $this->l('Collez ces valeurs dans les champs ci-dessous') . '</li>
+                                    <li>' . $this->l('Collez ces valeurs dans les champs ci-dessous et') . ' <strong>' . $this->l('sauvegardez') . '</strong></li>
+                                    <li>' . $this->l('Rendez-vous sur') . ' <a href="' . $adminUrl . '/imports" target="_blank"><strong>' . $this->l('Gestion des Imports') . '</strong></a> ' . $this->l('pour importer vos produits') . '</li>
                                 </ol>
                                 <p style="margin-top: 10px; margin-bottom: 0;">
                                     <i class="icon-lightbulb-o"></i> ' . $this->l('Une fois configuré, le widget de recherche remplacera automatiquement la recherche native de votre boutique.') . '
