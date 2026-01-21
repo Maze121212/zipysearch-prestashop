@@ -185,6 +185,11 @@ class ZipySearch extends Module
             'Accept: application/json',
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        // Suivre les redirections (307, 308, etc.)
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+        // Maintenir la méthode POST lors des redirections 307/308
+        curl_setopt($ch, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -258,6 +263,8 @@ class ZipySearch extends Module
 
     private function renderForm()
     {
+        $profileUrl = self::ADMIN_URL . '/profile';
+
         $fields_form = [
             'form' => [
                 'legend' => [
@@ -266,17 +273,40 @@ class ZipySearch extends Module
                 ],
                 'input' => [
                     [
+                        'type' => 'html',
+                        'label' => '',
+                        'name' => 'help_info',
+                        'html_content' => '
+                            <div class="alert alert-info">
+                                <h4><i class="icon-info-circle"></i> ' . $this->l('Où trouver vos identifiants ?') . '</h4>
+                                <p>' . $this->l('Pour configurer ce module, vous avez besoin de votre ID de compte et de votre Clé API.') . '</p>
+                                <ol>
+                                    <li>' . $this->l('Connectez-vous à votre espace ZipySearch') . ' : <a href="' . $profileUrl . '" target="_blank"><strong>' . $profileUrl . '</strong></a></li>
+                                    <li>' . $this->l('Allez dans la page') . ' <strong>' . $this->l('Mon compte') . '</strong> ' . $this->l('(accessible via le menu utilisateur)') . '</li>
+                                    <li>' . $this->l('Dans la section') . ' <strong>' . $this->l('Entreprise') . '</strong>, ' . $this->l('vous trouverez') . ' :
+                                        <ul>
+                                            <li><strong>' . $this->l('ID de compte') . '</strong> : ' . $this->l('identifiant unique de votre compte (ex: mon-site)') . '</li>
+                                            <li><strong>' . $this->l('Clé API') . '</strong> : ' . $this->l('clé secrète pour la configuration automatique') . '</li>
+                                        </ul>
+                                    </li>
+                                    <li>' . $this->l('Utilisez les boutons de copie pour récupérer facilement ces valeurs') . '</li>
+                                </ol>
+                            </div>
+                        ',
+                    ],
+                    [
                         'type' => 'text',
                         'label' => $this->l('ID de compte ZipySearch'),
                         'name' => 'tenant_slug',
-                        'desc' => $this->l('Disponible dans votre espace ZipySearch (Dashboard ou Profil)'),
+                        'desc' => $this->l('Copiez la valeur "ID de compte" depuis la section Entreprise de votre page Mon compte ZipySearch'),
                         'required' => true,
+                        'hint' => $this->l('Exemple : mon-site'),
                     ],
                     [
                         'type' => 'text',
                         'label' => $this->l('Clé API'),
                         'name' => 'api_key',
-                        'desc' => $this->l('Disponible dans votre Profil ZipySearch. Permet la configuration automatique.'),
+                        'desc' => $this->l('Copiez la valeur "Clé API" depuis la section Entreprise de votre page Mon compte ZipySearch. Cette clé permet au module de configurer automatiquement votre URL d\'export produits.'),
                         'required' => true,
                     ],
                     [
