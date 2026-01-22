@@ -19,7 +19,7 @@ class ZipySearch extends Module
     {
         $this->name = 'zipysearch';
         $this->tab = 'search_filter';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'ZipySearch';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -235,7 +235,7 @@ class ZipySearch extends Module
                         'required' => true,
                     ],
                     [
-                        'type' => 'text',
+                        'type' => 'password',
                         'label' => $this->l('API Key'),
                         'name' => 'api_key',
                         'desc' => $this->l('Enables automatic configuration of the products export URL'),

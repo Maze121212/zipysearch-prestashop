@@ -2,7 +2,7 @@
 <module>
     <name>zipysearch</name>
     <displayName><![CDATA[ZipySearch - Intelligent Search Engine]]></displayName>
-    <version><![CDATA[1.0.1]]></version>
+    <version><![CDATA[1.0.2]]></version>
     <description><![CDATA[Replace PrestaShop search with ZipySearch featuring autocomplete, filters and analytics.]]></description>
     <author><![CDATA[ZipySearch]]></author>
     <tab><![CDATA[search_filter]]></tab>
