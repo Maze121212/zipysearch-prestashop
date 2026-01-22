@@ -120,7 +120,7 @@ class ZipySearch extends Module
             Configuration::updateValue('ZIPYSEARCH_TENANT_SLUG', $tenantSlug);
             Configuration::updateValue('ZIPYSEARCH_API_KEY', $apiKey);
             Configuration::updateValue('ZIPYSEARCH_WIDGET_ENABLED', (int) Tools::getValue('widget_enabled'));
-            Configuration::updateValue('ZIPYSEARCH_INPUT_SELECTOR', Tools::getValue('input_selector'));
+            Configuration::updateValue('ZIPYSEARCH_INPUT_SELECTOR', html_entity_decode(Tools::getValue('input_selector'), ENT_QUOTES, 'UTF-8'));
             Configuration::updateValue('ZIPYSEARCH_CONVERSION_TRACKING', (int) Tools::getValue('conversion_tracking'));
             Configuration::updateValue('ZIPYSEARCH_DEBUG_MODE', (int) Tools::getValue('debug_mode'));
 
@@ -235,7 +235,7 @@ class ZipySearch extends Module
                         'required' => true,
                     ],
                     [
-                        'type' => 'password',
+                        'type' => 'text',
                         'label' => $this->l('API Key'),
                         'name' => 'api_key',
                         'desc' => $this->l('Enables automatic configuration of the products export URL'),
