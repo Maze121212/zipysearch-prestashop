@@ -199,7 +199,7 @@ Le suivi s'effectue via le hook `displayOrderConfirmation` qui est appelé sur l
 
 ### Multiboutique
 
-Le module est compatible avec le mode multiboutique de PrestaShop. Chaque boutique peut avoir sa propre configuration ZipySearch.
+Le module ne supporte pas le mode multiboutique. Si vous avez plusieurs boutiques PrestaShop, vous devez créer un compte ZipySearch séparé pour chacune d'entre elles.
 
 ### Multilingue
 
