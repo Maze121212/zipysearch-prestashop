@@ -7,9 +7,9 @@
  *
  * You must not modify, adapt or create derivative works of this source code
  *
- * @author    ZipySearch <contact@zipysearch.com>
- * @copyright ZipySearch
- * @license   Commercial license
+ * @author    ZipySearch <contact@zipybot.com>
+ * @copyright 2025 ZipySearch
+ * @license   Academic Free License 3.0 (AFL-3.0)
  *}
 <script>
 (function() {

@@ -1,0 +1,27 @@
+*** ZipySearch Changelog ***
+
+2025-01-27 - version 1.0.3
+* Update - License changed to Academic Free License 3.0 (AFL-3.0)
+* Update - Contact email updated to contact@zipybot.com
+
+2025-01-15 - version 1.0.2
+* Fixed - CSS selector encoding for special characters
+* Fixed - Input selector HTML entity decoding
+* Update - Improved synchronization with ZipySearch API
+
+2025-01-10 - version 1.0.1
+* Fixed - Export URL generation for multishop
+* Fixed - Combination attributes retrieval
+* Update - Better error handling for API sync
+
+2025-01-01 - version 1.0.0
+* Added - Initial release
+* Added - Product export via secure endpoint
+* Added - Search widget injection via displayHeader hook
+* Added - Conversion tracking via displayOrderConfirmation hook
+* Added - Product combinations (variations) support
+* Added - Admin configuration page
+* Added - Automatic synchronization with ZipySearch API
+* Added - Token-based secure export URL
+* Added - Debug mode for troubleshooting
+* Added - Multi-language support (FR included)
