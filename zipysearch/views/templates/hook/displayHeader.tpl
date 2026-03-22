@@ -11,7 +11,6 @@
  * @copyright 2025 ZipySearch
  * @license   Academic Free License 3.0 (AFL-3.0)
  *}
-<script src="{$zipysearch_api_url|escape:'htmlall':'UTF-8'}/widget/zipysearch.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof ZipySearch !== 'undefined') {

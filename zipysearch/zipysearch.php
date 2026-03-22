@@ -19,7 +19,7 @@ class ZipySearch extends Module
     {
         $this->name = 'zipysearch';
         $this->tab = 'search_filter';
-        $this->version = '1.0.3';
+        $this->version = '1.0.4';
         $this->author = 'ZipySearch';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -39,7 +39,9 @@ class ZipySearch extends Module
 
         return parent::install()
             && $this->installSql()
+            && $this->registerHook('actionFrontControllerSetMedia')
             && $this->registerHook('displayHeader')
+            && $this->registerHook('displayBeforeBodyClosingTag')
             && $this->registerHook('displayOrderConfirmation');
     }
 
@@ -70,7 +72,7 @@ class ZipySearch extends Module
         return Db::getInstance()->execute($sql);
     }
 
-    public function hookDisplayHeader($params)
+    private function getInitHtml(): string
     {
         if (!Configuration::get('ZIPYSEARCH_WIDGET_ENABLED')) {
             return '';
@@ -90,6 +92,52 @@ class ZipySearch extends Module
             'zipysearch_debug' => (bool) Configuration::get('ZIPYSEARCH_DEBUG_MODE'),
         ]);
         return $this->display(__FILE__, 'views/templates/hook/displayHeader.tpl');
+    }
+
+    public function hookActionFrontControllerSetMedia($params)
+    {
+        // Charge le widget JS sur tous les thèmes y compris mobile
+        if (!Configuration::get('ZIPYSEARCH_WIDGET_ENABLED')) {
+            return;
+        }
+        $tenant = Configuration::get('ZIPYSEARCH_TENANT_SLUG');
+        if (!$tenant) {
+            return;
+        }
+
+        $inputSelector = Configuration::get('ZIPYSEARCH_INPUT_SELECTOR') ?: 'input[name="s"]';
+        $inputSelector = html_entity_decode($inputSelector, ENT_QUOTES, 'UTF-8');
+
+        // Passe la config au JS via window.zipysearchConfig (auto-init garanti même sans displayHeader)
+        Media::addJsDef([
+            'zipysearchConfig' => [
+                'apiUrl' => self::API_URL,
+                'tenant' => $tenant,
+                'inputSelector' => $inputSelector,
+                'debug' => (bool) Configuration::get('ZIPYSEARCH_DEBUG_MODE'),
+            ],
+        ]);
+
+        $this->context->controller->registerJavascript(
+            'zipysearch-widget',
+            self::API_URL . '/widget/zipysearch.min.js',
+            ['server' => 'remote', 'position' => 'bottom', 'priority' => 200]
+        );
+    }
+
+    public function hookDisplayHeader($params)
+    {
+        $this->context->smarty->assign('zipysearch_injected', true);
+        return $this->getInitHtml();
+    }
+
+    public function hookDisplayBeforeBodyClosingTag($params)
+    {
+        // Fallback pour les thèmes mobiles qui n'appellent pas displayHeader
+        if (!empty($this->context->smarty->getTemplateVars('zipysearch_injected'))) {
+            return '';
+        }
+        return $this->getInitHtml();
     }
 
     public function hookDisplayOrderConfirmation($params)
