@@ -29,6 +29,7 @@ class ZipySearchExporter
             'title', 'link', 'description', 'id', 'price',
             'image link', 'product type', 'brand', 'color',
             'sale_price', 'qt_vendu', 'id_model', 'stocks',
+            'reference', 'barcode',
         ]);
 
         $offset = 0;
@@ -60,6 +61,7 @@ class ZipySearchExporter
         $sql = new DbQuery();
         $sql->select('p.id_product, pl.name, pl.description_short, pl.link_rewrite');
         $sql->select('p.id_category_default, m.name as manufacturer_name');
+        $sql->select('p.reference, p.ean13, p.upc');
         $sql->from('product', 'p');
         $sql->leftJoin('product_lang', 'pl', 'p.id_product = pl.id_product AND pl.id_lang = ' . (int) $this->idLang . ' AND pl.id_shop = ' . (int) $this->idShop);
         $sql->leftJoin('product_shop', 'ps', 'p.id_product = ps.id_product AND ps.id_shop = ' . (int) $this->idShop);
@@ -74,7 +76,7 @@ class ZipySearchExporter
     private function getCombinations($idProduct)
     {
         $sql = new DbQuery();
-        $sql->select('pa.id_product_attribute, pa.reference, pa.price as price_impact');
+        $sql->select('pa.id_product_attribute, pa.reference, pa.ean13, pa.upc, pa.price as price_impact');
         $sql->from('product_attribute', 'pa');
         $sql->leftJoin('product_attribute_shop', 'pas', 'pa.id_product_attribute = pas.id_product_attribute AND pas.id_shop = ' . (int) $this->idShop);
         $sql->where('pa.id_product = ' . (int) $idProduct);
@@ -112,6 +114,8 @@ class ZipySearchExporter
             $sales,
             $row['id_product'],
             max(0, $stock),
+            $row['reference'] ?? '',
+            $row['ean13'] ?: ($row['upc'] ?? ''),
         ];
     }
 
@@ -165,6 +169,8 @@ class ZipySearchExporter
             $sales,
             $idProduct . '-' . $idProductAttribute,
             max(0, $stock),
+            $combination['reference'] ?: ($row['reference'] ?? ''),
+            ($combination['ean13'] ?: ($combination['upc'] ?? '')) ?: ($row['ean13'] ?: ($row['upc'] ?? '')),
         ];
     }
 

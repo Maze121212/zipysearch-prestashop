@@ -19,7 +19,7 @@ class ZipySearch extends Module
     {
         $this->name = 'zipysearch';
         $this->tab = 'search_filter';
-        $this->version = '1.0.4';
+        $this->version = '1.0.5';
         $this->author = 'ZipySearch';
         $this->need_instance = 0;
         $this->bootstrap = true;
