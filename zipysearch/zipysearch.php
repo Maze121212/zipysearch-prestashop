@@ -15,11 +15,15 @@ class ZipySearch extends Module
     const API_URL = 'https://api-search.zipybot.com';
     const ADMIN_URL = 'https://search.zipybot.com';
 
+    // Canal de distribution et secret HMAC (remplaces au build par scripts/build-ps-module.sh)
+    const CHANNEL = '__ZIPY_CHANNEL__';
+    const CHANNEL_SECRET = '__ZIPY_CHANNEL_SECRET__';
+
     public function __construct()
     {
         $this->name = 'zipysearch';
         $this->tab = 'search_filter';
-        $this->version = '1.0.5';
+        $this->version = '1.0.6';
         $this->author = 'ZipySearch';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -55,7 +59,77 @@ class ZipySearch extends Module
             && Configuration::deleteByName('ZIPYSEARCH_WIDGET_ENABLED')
             && Configuration::deleteByName('ZIPYSEARCH_INPUT_SELECTOR')
             && Configuration::deleteByName('ZIPYSEARCH_CONVERSION_TRACKING')
-            && Configuration::deleteByName('ZIPYSEARCH_DEBUG_MODE');
+            && Configuration::deleteByName('ZIPYSEARCH_DEBUG_MODE')
+            && Configuration::deleteByName('ZIPYSEARCH_ACTIVATION_URL')
+            && Configuration::deleteByName('ZIPYSEARCH_ACTIVATION_STATUS');
+    }
+
+    /**
+     * Phone-home vers ZipySearch pour declarer l'installation du module.
+     * Selon le canal (addons|direct) et si le domaine n'a pas deja ete vu,
+     * le serveur peut repondre avec un lien magique d'activation de trial Pro 30j.
+     *
+     * Idempotent : peut etre appele plusieurs fois, le serveur gere l'unicite par domaine.
+     */
+    private function phoneHome()
+    {
+        if (self::CHANNEL === '__ZIPY_CHANNEL__' || self::CHANNEL_SECRET === '__ZIPY_CHANNEL_SECRET__') {
+            // Module non build (ex: clone Git direct) - pas de phone-home
+            return null;
+        }
+
+        $domain = $this->context->shop->domain;
+        $timestamp = time();
+        $shopEmail = Configuration::get('PS_SHOP_EMAIL') ?: '';
+        $psVersion = _PS_VERSION_;
+        $payload = $domain . '|' . $timestamp . '|' . self::CHANNEL;
+        $signature = hash_hmac('sha256', $payload, self::CHANNEL_SECRET);
+
+        $data = [
+            'domain' => $domain,
+            'timestamp' => $timestamp,
+            'channel' => self::CHANNEL,
+            'signature' => $signature,
+            'shopEmail' => $shopEmail,
+            'psVersion' => $psVersion,
+            'moduleVersion' => $this->version,
+        ];
+
+        $ch = curl_init(self::ADMIN_URL . '/api/module/activate-trial');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$response) {
+            return null;
+        }
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        // Stocker l'etat d'activation pour afficher la banniere dans getContent()
+        if (!empty($decoded['activationUrl'])) {
+            Configuration::updateValue('ZIPYSEARCH_ACTIVATION_URL', $decoded['activationUrl']);
+        }
+        if (!empty($decoded['status'])) {
+            Configuration::updateValue('ZIPYSEARCH_ACTIVATION_STATUS', $decoded['status']);
+        }
+
+        return $decoded;
     }
 
     private function installSql()
@@ -160,6 +234,30 @@ class ZipySearch extends Module
     public function getContent()
     {
         $output = '';
+
+        // Phone-home idempotent a chaque ouverture de la page de config.
+        // Tant que le tenant n'est pas configure, on reessaie pour recuperer
+        // l'URL d'activation (utile si le serveur etait down a l'install).
+        $tenantConfigured = (Configuration::get('ZIPYSEARCH_TENANT_SLUG') && Configuration::get('ZIPYSEARCH_API_KEY'));
+        if (!$tenantConfigured) {
+            $this->phoneHome();
+        }
+
+        // Afficher la banniere d'activation Addons si on a une URL en attente
+        $activationUrl = Configuration::get('ZIPYSEARCH_ACTIVATION_URL');
+        $activationStatus = Configuration::get('ZIPYSEARCH_ACTIVATION_STATUS');
+        if ($activationUrl && $activationStatus === 'pending_activation' && !$tenantConfigured) {
+            $output .= '<div class="panel" style="border-left: 4px solid #28a745; padding: 16px; margin-bottom: 16px; background: #f0f9f1;">'
+                . '<h3 style="margin-top: 0; color: #28a745;">'
+                . $this->l('Activez votre mois gratuit ZipySearch Pro')
+                . '</h3>'
+                . '<p>' . $this->l('Merci pour votre achat sur PrestaShop Addons ! Vous beneficiez de 1 mois offert sur le plan Pro (valeur 99 euros).') . '</p>'
+                . '<p>' . $this->l('Cliquez sur le bouton ci-dessous pour creer votre compte ZipySearch et activer votre essai. Une carte bancaire sera demandee pour la mise en place de l\'abonnement (aucun prelevement pendant les 30 premiers jours, annulable a tout moment).') . '</p>'
+                . '<p><a href="' . htmlspecialchars($activationUrl, ENT_QUOTES) . '" target="_blank" class="btn btn-success btn-lg">'
+                . $this->l('Activer mon mois gratuit')
+                . '</a></p>'
+                . '</div>';
+        }
 
         if (Tools::isSubmit('submit_zipysearch')) {
             $tenantSlug = Tools::getValue('tenant_slug');
