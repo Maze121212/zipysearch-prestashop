@@ -1,5 +1,14 @@
 *** ZipySearch Changelog ***
 
+2026-04-15 - version 1.0.6
+* Added - Auto Pro trial (1 month) for PrestaShop Addons buyers via secure phone-home activation
+
+2026-03-25 - version 1.0.5
+* Added - reference and barcode (ean13/upc) fields in the CSV export
+
+2026-03-22 - version 1.0.4
+* Added - Widget injection on mobile themes (displayBeforeBodyClosingTag + actionFrontControllerSetMedia hooks)
+
 2025-01-27 - version 1.0.3
 * Update - License changed to Academic Free License 3.0 (AFL-3.0)
 * Update - Contact email updated to contact@zipybot.com
