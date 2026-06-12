@@ -279,6 +279,18 @@ Voir le texte complet de la licence : https://opensource.org/licenses/AFL-3.0
 
 ## Changelog
 
+### Version 1.0.6 (2026-04-15)
+
+- Essai Pro automatique (1 mois) pour les acheteurs PrestaShop Addons via activation sécurisée (phone-home)
+
+### Version 1.0.5 (2026-03-25)
+
+- Ajout des champs `reference` et `barcode` (ean13/upc) dans l'export CSV
+
+### Version 1.0.4 (2026-03-22)
+
+- Injection du widget sur les thèmes mobiles (hooks `displayBeforeBodyClosingTag` + `actionFrontControllerSetMedia`)
+
 ### Version 1.0.3 (2025-01-27)
 
 - Changement de licence vers AFL-3.0
